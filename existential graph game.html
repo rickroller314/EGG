@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>
+			<-- EGG
+		</title>
+		<link rel="icon" href="32390-egg-icon.ico">
+		<style>
+html, body{
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+canvas, div{
+	margin:0;
+}
+div{
+	overflow:scroll;
+	border:solid;
+	border-color:#aaaaaa;
+}
+		</style>
+		<script src="Label.js"></script>
+		<script src="Cut.js"></script>
+		<script src="ThereExists.js"></script>
+		<script src="ExistentialGraph.js"></script>
+	</head>
+	<body>
+		<div style="height:60%"><canvas id="existentialGraph"></canvas></div>
+		<div style="height:30%"><canvas id="hyperGraph"></canvas></div>
+		<script>
+window.canvas = document.getElementById("existentialGraph");
+window.c = canvas.getContext("2d");
+c.textBaseline = "top";
+c.font = "40px monospace";
+window.globalID = 0; // this is a variable used to identify cuts, labels, etc.
+window.margin = 20;
+
+function checkConflict(a, b){
+	return a.x+a.w>b.x&&a.x<b.x+b.w&&a.y+a.h>b.y&&a.y<b.y+b.h;
+}
+
+
+let eg = new ExistentialGraph(canvas);
+let cut = new Cut(400, 400);
+let l = new Label("this is a really long message uwuwuwu  asdlkfjdsakjhf  fladskjhflsa  asldkhflkfhdlsa ah sdjkflfjd ssa ahdfjfhl a lkakjsdh flkasjdh a sd ff  fd sal", "#ff0000", "#000000");
+let s = new Label("short text", "#000000", "#00ffff");
+let cut2 = new Cut(300, 300);
+eg.insert(cut, 10, 10);
+cut.insert(l, 20, 20);
+cut.insert(s, 90, 30);
+cut.insert(cut2, 100, 10);
+let cut3 = new Cut(60, 60);
+cut3.insert(new Label("q", "#ffffff", "#888888"), 10, 10);
+cut2.insert(cut3, 290, 290);
+cut2.insert(new Label("p", "#ff0000", "#000000"), 10, 10);
+let cut4 = new Cut(10, 10);
+let cut5 = new Cut(10, 10);
+cut4.insert(new Label("p", "#ffffaa", "#ff00ff"), 10, 10);
+cut5.insert(new Label("q", "#000000", "#00ff00"), 10, 10);
+cut4.insert(cut5, 0, 0);
+cut.insert(cut4, 600, 100);
+let x = new ThereExists("red");
+let y = new ThereExists("blue");
+let z = new ThereExists("green");
+cut.insert(x, 500, 200);
+cut.insert(y, 500, 250);
+cut4.insert(z, 0, 0);
+s.connect(x, 0);
+
+eg.display();
+		</script>
+	</body>
+</html>

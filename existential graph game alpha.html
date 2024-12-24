@@ -1,0 +1,213 @@
+<!--
+NOTE FOR FUTURE PROGRAMMERS: CHECK OUT THIS WEBSITE FIRST ==> http://www.jfsowa.com/pubs/egtut.pdf
+-->
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>
+			<-- EGG
+		</title>
+		<link rel="icon" href="32390-egg-icon.ico">
+		<style>
+html, body{
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+canvas, div{
+	margin:0;
+}
+div{
+	overflow:scroll;
+	border:solid;
+	border-color:#aaaaaa;
+}
+		</style>
+		<script src="Label alpha.js"></script>
+		<script src="Cut alpha.js"></script>
+		<script src="ExistentialGraph.js"></script>
+	</head>
+	<body>
+		<nav>
+			<button id="i1">in</button><button id="e1">e</button>
+			&nbsp;
+			<button id="i2">it</button><button id="e2">de</button>
+			&nbsp;
+			<button id="i3">dci</button><button id="e3">dce</button>
+			&nbsp;&nbsp;&nbsp;&nbsp;
+			<button onclick = "shading = !shading; eg.display();">toggle shading</button>
+			<button onclick = "rounded = !rounded; eg.display();">toggle rounded corners</button>
+			<div id="pieces" style="visibility:hidden">
+				<button onclick = "insertingi1 = true;">delete</button>
+				<button onclick = "insertingi1 = new Cut(0, 0);">cut</button>
+				<button onclick = "insertingi1 = new Label(document.getElementById('labelname').innerText, document.getElementById('labeltextcolor').innerText, document.getElementById('labelbgcolor').innerText);">label</button>
+				Label name: <a-a contenteditable style="border:solid" id="labelname">p</a-a>
+				Text Color: <a-a contenteditable style="border:solid" id="labeltextcolor">#ff0000</a-a>
+				Highlight Color: <a-a contenteditable style="border:solid" id="labelbgcolor">#00ffff</a-a>
+			</div>
+		</nav>
+		<div style="height:60%"><canvas id="existentialGraph"></canvas></div>
+		<div style="height:30%"><canvas id="hyperGraph"></canvas></div>
+		<script>
+CanvasRenderingContext2D.prototype.fillRoundedRect = function(x, y, w, h, r){
+	this.beginPath();
+	this.moveTo(x+r, y);
+	this.lineTo(x+w-r, y);
+	this.arcTo(x+w, y, x+w, y+r, r);
+	this.lineTo(x+w, y+h-r);
+	this.arcTo(x+w, y+h, x+w-r, y+h, r);
+	this.lineTo(x+r, y+h);
+	this.arcTo(x, y+h, x, y+h-r, r);
+	this.lineTo(x, y+r);
+	this.arcTo(x, y, x+r, y, r);
+	this.fill();
+	this.closePath();
+}
+CanvasRenderingContext2D.prototype.strokeRoundedRect = function(x, y, w, h, r){
+	this.beginPath();
+	this.moveTo(x+r-1, y);
+	this.lineTo(x+w-r, y);
+	this.arcTo(x+w, y, x+w, y+r, r);
+	this.lineTo(x+w, y+h-r);
+	this.arcTo(x+w, y+h, x+w-r, y+h, r);
+	this.lineTo(x+r, y+h);
+	this.arcTo(x, y+h, x, y+h-r, r);
+	this.lineTo(x, y+r);
+	this.arcTo(x, y, x+r, y, r);
+	this.stroke();
+	this.closePath();
+}
+window.canvas = document.getElementById("existentialGraph");
+window.c = canvas.getContext("2d");
+c.textBaseline = "top";
+c.font = "40px monospace";
+window.globalID = 0; // this is a variable used to identify cuts, labels, etc.
+window.margin = 20;
+window.shading = true;
+window.rounded = true;
+window.mouseX = 0;
+window.mouseY = 0;
+window.insertingi1 = false;
+window.recordingi1 = false;
+window.selected = false;
+window.recording = false;
+window.onMouseMove = function(){
+	eg.display();
+};
+canvas.addEventListener("mousemove", function(e){
+	let cRect = canvas.getBoundingClientRect();	// Gets CSS pos, and width/height
+	mouseX = Math.round(e.clientX - cRect.left);	// Subtract the 'left' of the canvas 
+	mouseY = Math.round(e.clientY - cRect.top);	// from the X/Y positions to make
+});
+canvas.onclick = function(){
+	if(insertingi1){
+		let target = eg.findSelected(mouseX, mouseY);
+		if(insertingi1.id){
+			for(let i = 0; i < recordingi1.length; i++) if(target == recordingi1[i]){
+				let part = insertingi1.duplicate();
+				target.insert(part, mouseX-target.X, mouseY-target.Y);
+				recordingi1.push(part);
+				eg.display();
+				return;	
+			}
+			alert("cannot insert into object that is not highlighted while the 'in' button is highlighted.");
+		}else{
+			for(let i = 0; i < recordingi1.length; i++) if(target == recordingi1[i]){
+				target.removeSelf();
+				eg.display();
+				return;	
+			}
+			alert("cannot remove object that is not highlighted while the 'in' button is highlighted.");
+		}
+		eg.display();
+		return
+	}
+	window.prevSelected = window.selected;
+	window.selected = eg.findSelected(mouseX, mouseY);
+	console.log(selected);
+	if(recording){
+		for(let i = 1; i < recording.length; i++){
+			if(selected == recording[i]){
+				recording.splice(i, 1);
+				eg.display();
+				return;
+			}
+		}
+		recording.push(selected);
+	}
+	eg.display();
+};
+function checkConflict(a, b){
+	return a.x+a.w>b.x&&a.x<b.x+b.w&&a.y+a.h>b.y&&a.y<b.y+b.h;
+}
+function inRect(x, y, w, h, mx, my){
+	return mx > x && my > y && mx < x+w && my < y+h;
+}
+
+window.i1 = document.getElementById("i1");
+i1.title = "Insertion: insert anything onto an odd level (shaded).\nSelect an odd-level (shaded) area, click this button to enable insertion mode, insert items, then click this button again to confirm your entry.";
+i1.onclick = function(){
+	if(i1.style.color == "rgb(255, 255, 0)"){
+		prevSelected = selected = undefined;
+		document.getElementById("pieces").style.visibility="hidden";
+		insertingi1 = false;	
+		recordingi1 = false;
+		i1.style.color = "rgb(0, 0, 0)";
+		eg.display();
+	}else{
+		if(selected.even == true || selected.even == undefined){ // yes you could write this as "!(selected.even == false)"  or "selected.even || selected.even == undefined" but this is easier to read.
+			alert("Cannot insert into an even level.");
+			prevSelected = selected = undefined;
+			eg.display();
+			return;
+		}
+		insertingi1 = true;
+		recordingi1 = [selected];
+		document.getElementById("pieces").style.visibility="";
+		eg.display();
+		i1.style.color = "rgb(255, 255, 0)";
+	}
+}
+window.e1 = document.getElementById("e1");
+e1.title = "Erasure: erase anything from an even level (unshaded).\nSelect an object in an even-level (unshaded) area, then click this button to erase it.";
+e1.onclick = function(){
+	eg.erasure(selected);
+	prevSelected = selected = undefined;
+}
+window.i2 = document.getElementById("i2");
+i2.title = "Iteration: copy anything to an inner level.\nSelect a structure, select any inner region to copy the structure to, then click this button.";
+i2.onclick = function(){
+	eg.iterate(prevSelected, selected, 0, 0);
+	prevSelected = selected = undefined;
+}
+window.e2 = document.getElementById("e2");
+e2.title = "Deiteration: remove an equivalent structure from an inner level.\nSelect a structure, select an equivalent inner structure to erase, then click this button.";
+e2.onclick = function(){
+	eg.deiterate(prevSelected, selected, 0, 0);
+	prevSelected = selected = undefined;
+}
+window.i3 = document.getElementById("i3");
+i3.title = "Double Cut Insert: create an empty shaded or unshaded ring-shaped area.\nSelect the region you would like to put the double cut in, click this button, select the items you want to appear inside the double cut, then click this button again.";
+i3.onclick = function(){
+	if(i3.style.color == "rgb(255, 255, 0)"){
+		let parent = recording.splice(0, 1)[0];
+		eg.doubleCutInsert(recording, parent, 0, 0);
+		recording = false;
+		i3.style.color = "rgb(0, 0, 0)";
+	}else{
+		recording = [selected];
+		i3.style.color = "rgb(255, 255, 0)";
+	}
+	eg.display();
+	prevSelected = selected = undefined;
+}
+window.e3 = document.getElementById("e3");
+e3.title = "Double Cut Erase: supress any empty shaded or unshaded ring-shaped area.\nSelect cut surrounding the empty region then click this button.";
+e3.onclick = function(){
+	eg.doubleCutErase(selected);
+	prevSelected = selected = undefined;
+}
+let eg = new ExistentialGraph(canvas);
+		</script>
+	</body>
+</html>
